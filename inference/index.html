@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>小陈 (Xiao Chen) AI - 对话界面</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .chat-scroll::-webkit-scrollbar { width: 4px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen flex flex-col">
+    <header class="bg-white border-b px-6 py-4 flex items-center justify-between shadow-sm">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl">陈</div>
+            <div>
+                <h1 class="text-lg font-bold text-gray-800">小陈 (Xiao Chen)</h1>
+                <p class="text-xs text-gray-500">由 陈嘉稷 训练的 AI 助手</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2 text-xs">
+            <label class="text-gray-400">Temperature:</label>
+            <input type="range" id="temp-slider" min="0.1" max="1.5" step="0.1" value="0.7" class="w-20">
+            <span id="temp-val" class="text-gray-600 w-6">0.7</span>
+        </div>
+    </header>
+
+    <main id="chat-window" class="flex-1 overflow-y-auto p-6 space-y-6 chat-scroll"></main>
+
+    <footer class="p-4 bg-white border-t">
+        <div class="max-w-4xl mx-auto flex space-x-2">
+            <textarea id="user-input" rows="1" placeholder="给小陈发消息..." 
+                class="flex-1 p-3 bg-gray-100 rounded-xl resize-none outline-none focus:ring-1 focus:ring-blue-500"></textarea>
+            <button id="send-btn" class="bg-blue-600 text-white px-4 rounded-xl hover:bg-blue-700 transition-all">发送</button>
+        </div>
+    </footer>
+
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const tempSlider = document.getElementById('temp-slider');
+        const tempVal = document.getElementById('temp-val');
+
+        tempSlider.oninput = () => tempVal.innerText = tempSlider.value;
+
+        function addMessage(text, isUser = false) {
+            const wrapper = document.createElement('div');
+            wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+            const div = document.createElement('div');
+            div.className = `${isUser ? 'bg-blue-600 text-white' : 'bg-white border text-gray-700'} px-4 py-2 rounded-2xl max-w-[85%] text-sm`;
+            div.innerText = text;
+            wrapper.appendChild(div);
+            chatWindow.appendChild(wrapper);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            return div;
+        }
+
+        async function handleSend() {
+            const text = userInput.value.trim();
+            if (!text || sendBtn.disabled) return;
+
+            addMessage(text, true);
+            userInput.value = '';
+            sendBtn.disabled = true;
+
+            const aiMsgDiv = addMessage("思考中...");
+
+            try {
+                // 使用相对路径访问后端接口
+                const res = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: text, temperature: parseFloat(tempSlider.value) })
+                });
+                const data = await res.json();
+                aiMsgDiv.innerText = data.response || "小陈暂时不知道怎么回答。";
+            } catch (e) {
+                aiMsgDiv.innerText = "错误：无法连接到后端大脑。";
+            } finally {
+                sendBtn.disabled = false;
+            }
+        }
+
+        sendBtn.onclick = handleSend;
+        userInput.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } };
+    </script>
+</body>
+</html>
