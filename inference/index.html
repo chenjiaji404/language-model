@@ -2,88 +2,360 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>小陈 (Xiao Chen) AI - 对话界面</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xiao Chen AI | 陈嘉稷训练</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
     <style>
-        .chat-scroll::-webkit-scrollbar { width: 4px; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        :root {
+            /* 重新设计配色方案：深色极简风格 */
+            --primary-bg: #0d0d0d;        /* 主背景：接近纯黑 */
+            --sidebar-bg: #171717;        /* 侧边栏：深灰色 */
+            --accent-color: #3b82f6;      /* 主题色：科技蓝 */
+            --user-msg: #262626;          /* 用户气泡：深灰色 */
+            --ai-msg: #1a1a1a;            /* AI 气泡：更深的灰色 */
+            --border-color: #2e2e2e;      /* 边框色：低调的线条 */
+            --text-main: #e5e5e5;         /* 主文字 */
+            --text-dim: #737373;          /* 次要文字 */
+            --hover-bg: #262626;          /* 悬停态背景 */
+        }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--primary-bg);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* 侧边栏优化：增加呼吸感 */
+        aside {
+            width: 260px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            z-index: 100;
+        }
+
+        .new-chat-btn {
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-main);
+            padding: 0.8rem;
+            border-radius: 0.6rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+        .new-chat-btn:hover { 
+            background: var(--hover-bg); 
+            border-color: var(--text-dim);
+        }
+
+        .history-container {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 0.5rem;
+        }
+        .history-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            padding: 0.5rem 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .history-item {
+            padding: 0.75rem 0.8rem;
+            margin-bottom: 4px;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #a3a3a3;
+            transition: 0.2s;
+        }
+        .history-item:hover { background: var(--hover-bg); color: white; }
+        .history-item.active { 
+            background: #262626; 
+            color: var(--accent-color);
+            font-weight: 500;
+        }
+
+        .clear-btn {
+            margin-top: auto;
+            padding: 0.8rem;
+            color: var(--text-dim);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .clear-btn:hover { color: #f87171; }
+
+        /* 主对话区：去除渐变，采用纯粹的质感 */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--primary-bg);
+            position: relative;
+        }
+
+        header {
+            padding: 0.9rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(13, 13, 13, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        #chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem 10% 2rem; /* 两侧留白增加阅读舒适度 */
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* 欢迎界面：简约化 */
+        #intro-box { margin: auto; text-align: center; max-width: 500px; }
+        .intro-icon {
+            width: 50px; height: 50px; background: #262626;
+            border: 1px solid var(--border-color);
+            border-radius: 12px; margin: 0 auto 1.5rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: var(--accent-color);
+        }
+        #intro-box h2 { font-weight: 500; letter-spacing: -0.5px; }
+
+        /* 消息样式：取消强烈的圆角，采用更方正的简约感 */
+        .message {
+            max-width: 85%;
+            padding: 1rem 1.25rem;
+            border-radius: 0.75rem;
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+        .user-message { 
+            align-self: flex-end; 
+            background: var(--user-msg); 
+            border: 1px solid var(--border-color);
+            color: #fff;
+        }
+        .ai-message { 
+            align-self: flex-start; 
+            background: var(--ai-msg); 
+            border: 1px solid var(--border-color); 
+            color: #d4d4d4;
+        }
+
+        /* 代码块优化 */
+        pre { background: #000 !important; border-radius: 0.5rem; border: 1px solid var(--border-color); }
+
+        .input-area { padding: 1.5rem 10% 2.5rem; }
+        .input-wrapper {
+            max-width: 800px; margin: 0 auto;
+            background: #171717;
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 0.5rem 1rem;
+            display: flex; align-items: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+        input {
+            flex: 1; background: transparent; border: none; padding: 0.7rem;
+            color: white; outline: none; font-size: 1rem;
+        }
+        .send-btn {
+            background: var(--text-main); color: #000; border: none;
+            width: 32px; height: 32px; border-radius: 0.4rem; cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .send-btn:hover { transform: scale(1.05); background: #fff; }
+        .send-btn:disabled { background: var(--text-dim); cursor: not-allowed; }
+
+        .loading { display: none; margin-right: 12px; color: var(--accent-color); font-size: 0.9rem; }
+        
+        /* 滚动条美化 */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
     </style>
 </head>
-<body class="bg-gray-50 h-screen flex flex-col">
-    <header class="bg-white border-b px-6 py-4 flex items-center justify-between shadow-sm">
-        <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xl">陈</div>
-            <div>
-                <h1 class="text-lg font-bold text-gray-800">小陈 (Xiao Chen)</h1>
-                <p class="text-xs text-gray-500">由 陈嘉稷 训练的 AI 助手</p>
-            </div>
-        </div>
-        <div class="flex items-center space-x-2 text-xs">
-            <label class="text-gray-400">Temperature:</label>
-            <input type="range" id="temp-slider" min="0.1" max="1.5" step="0.1" value="0.7" class="w-20">
-            <span id="temp-val" class="text-gray-600 w-6">0.7</span>
-        </div>
+<body>
+
+<aside>
+    <button class="new-chat-btn" onclick="startNewChat()">
+        <i class="fa-solid fa-plus"></i> 新对话
+    </button>
+    <div class="history-container" id="history-list">
+        <div class="history-label">最近对话</div>
+    </div>
+    <button class="clear-btn" onclick="clearAllData()">
+        <i class="fa-solid fa-trash-can"></i> 清除历史缓存
+    </button>
+</aside>
+
+<main>
+    <header>
+        <div style="font-weight: 600; font-size: 1rem; letter-spacing: 0.5px;">Xiao Chen AI</div>
+        <div style="color: var(--text-dim); font-size: 0.75rem; font-family: monospace;">TRAINED BY CHEN JIAJI</div>
     </header>
 
-    <main id="chat-window" class="flex-1 overflow-y-auto p-6 space-y-6 chat-scroll"></main>
+    <div id="chat-container"></div>
 
-    <footer class="p-4 bg-white border-t">
-        <div class="max-w-4xl mx-auto flex space-x-2">
-            <textarea id="user-input" rows="1" placeholder="给小陈发消息..." 
-                class="flex-1 p-3 bg-gray-100 rounded-xl resize-none outline-none focus:ring-1 focus:ring-blue-500"></textarea>
-            <button id="send-btn" class="bg-blue-600 text-white px-4 rounded-xl hover:bg-blue-700 transition-all">发送</button>
+    <div class="input-area">
+        <div class="input-wrapper">
+            <input type="text" id="user-input" placeholder="键入消息，开始对话..." autocomplete="off">
+            <span id="loader" class="loading"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+            <button class="send-btn" id="send-btn" onclick="sendMessage()">
+                <i class="fa-solid fa-arrow-up"></i>
+            </button>
         </div>
-    </footer>
+    </div>
+</main>
 
-    <script>
-        const chatWindow = document.getElementById('chat-window');
-        const userInput = document.getElementById('user-input');
-        const sendBtn = document.getElementById('send-btn');
-        const tempSlider = document.getElementById('temp-slider');
-        const tempVal = document.getElementById('temp-val');
+<script>
+    const chatContainer = document.getElementById('chat-container');
+    const userInput = document.getElementById('user-input');
+    const loader = document.getElementById('loader');
+    const historyList = document.getElementById('history-list');
+    const sendBtn = document.getElementById('send-btn');
 
-        tempSlider.oninput = () => tempVal.innerText = tempSlider.value;
+    let sessions = JSON.parse(localStorage.getItem('xiao_chen_sessions') || '[]');
+    let currentSessionId = null;
 
-        function addMessage(text, isUser = false) {
-            const wrapper = document.createElement('div');
-            wrapper.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
-            const div = document.createElement('div');
-            div.className = `${isUser ? 'bg-blue-600 text-white' : 'bg-white border text-gray-700'} px-4 py-2 rounded-2xl max-w-[85%] text-sm`;
-            div.innerText = text;
-            wrapper.appendChild(div);
-            chatWindow.appendChild(wrapper);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-            return div;
+    // 统一定义欢迎语
+    const welcomeHTML = `
+        <div id="intro-box">
+            <div class="intro-icon"><i class="fa-solid fa-bolt"></i></div>
+            <h2>欢迎使用小陈 AI</h2>
+        </div>
+    `;
+
+    window.onload = () => {
+        renderHistorySidebar();
+        startNewChat(); 
+    };
+
+    userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        if (!text) return;
+
+        let isFirstInSession = false;
+        if (!currentSessionId) {
+            currentSessionId = Date.now();
+            sessions.unshift({ id: currentSessionId, title: text.substring(0, 15), messages: [] });
+            isFirstInSession = true;
         }
 
-        async function handleSend() {
-            const text = userInput.value.trim();
-            if (!text || sendBtn.disabled) return;
+        const session = sessions.find(s => s.id === currentSessionId);
+        appendMessageToUI('user', text);
+        session.messages.push({ role: 'user', content: text });
+        userInput.value = '';
+        
+        // 状态控制
+        loader.style.display = 'inline';
+        sendBtn.disabled = true;
 
-            addMessage(text, true);
-            userInput.value = '';
-            sendBtn.disabled = true;
-
-            const aiMsgDiv = addMessage("思考中...");
-
-            try {
-                // 使用相对路径访问后端接口
-                const res = await fetch('/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt: text, temperature: parseFloat(tempSlider.value) })
-                });
-                const data = await res.json();
-                aiMsgDiv.innerText = data.response || "小陈暂时不知道怎么回答。";
-            } catch (e) {
-                aiMsgDiv.innerText = "错误：无法连接到后端大脑。";
-            } finally {
-                sendBtn.disabled = false;
-            }
+        try {
+            const response = await fetch('http://127.0.0.1:8000/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ prompt: text, temperature: 0.7 })
+            });
+            const data = await response.json();
+            appendMessageToUI('ai', data.response);
+            session.messages.push({ role: 'ai', content: data.response });
+            saveData();
+            if (isFirstInSession) renderHistorySidebar();
+        } catch (error) {
+            appendMessageToUI('ai', '⚠️ 服务未响应，请检查后端运行状态。');
+        } finally {
+            loader.style.display = 'none';
+            sendBtn.disabled = false;
         }
+    }
 
-        sendBtn.onclick = handleSend;
-        userInput.onkeydown = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } };
-    </script>
+    function renderHistorySidebar() {
+        const label = historyList.querySelector('.history-label');
+        historyList.innerHTML = '';
+        historyList.appendChild(label);
+        sessions.forEach(s => {
+            const item = document.createElement('div');
+            item.className = `history-item ${s.id === currentSessionId ? 'active' : ''}`;
+            item.innerHTML = `<i class="fa-regular fa-message"></i> ${s.title}`;
+            item.onclick = () => loadSession(s.id);
+            historyList.appendChild(item);
+        });
+    }
+
+    function loadSession(id) {
+        currentSessionId = id;
+        const session = sessions.find(s => s.id === id);
+        chatContainer.innerHTML = '';
+        session.messages.forEach(m => appendMessageToUI(m.role, m.content));
+        renderHistorySidebar();
+    }
+
+    function startNewChat() {
+        currentSessionId = null;
+        chatContainer.innerHTML = welcomeHTML;
+        renderHistorySidebar();
+    }
+
+    function appendMessageToUI(role, text) {
+        const intro = document.getElementById('intro-box');
+        if (intro) intro.remove();
+
+        const div = document.createElement('div');
+        div.className = `message ${role}-message`;
+        div.innerHTML = role === 'ai' ? marked.parse(text) : text;
+        
+        // 高亮处理
+        if (role === 'ai') div.querySelectorAll('pre code').forEach(hljs.highlightElement);
+        
+        chatContainer.appendChild(div);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function saveData() {
+        localStorage.setItem('xiao_chen_sessions', JSON.stringify(sessions));
+    }
+
+    function clearAllData() {
+        if (confirm('确认清除所有历史对话吗？')) {
+            localStorage.removeItem('xiao_chen_sessions');
+            sessions = [];
+            startNewChat();
+        }
+    }
+</script>
+
 </body>
 </html>
