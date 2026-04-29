@@ -1,6 +1,7 @@
 小陈 (Xiao Chen) AI —— 从零构建的轻量级全栈大语言模型项目
 
-<img width="1240" height="683" alt="模型界面" src="https://github.com/user-attachments/assets/41639d78-d3ea-489f-a393-3013d4dd52b0" />
+<img width="446" height="305" alt="屏幕截图 2026-04-29 154120" src="https://github.com/user-attachments/assets/10c5e0c2-1bc2-403a-9e6b-3cc9a5588449" />
+
 
 
 由小陈独立开发并训练的一个全栈大语言模型项目，旨在帮助有兴趣的同学更好的了解大模型底层原理、训练流程及部署环节。
@@ -133,6 +134,7 @@
 
 注意事项：本项目代码文件的路径需要修改
 
+<img width="1240" height="683" alt="模型效果1" src="https://github.com/user-attachments/assets/bd3a53a6-3fc8-4521-9952-7935f6c59477" />
 
 
 
